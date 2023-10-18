@@ -22,8 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliDatePickerDialog
+import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliDatePickerBottomSheet
+import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliEventView
 import ir.huri.jcal.JalaliCalendar
+import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
