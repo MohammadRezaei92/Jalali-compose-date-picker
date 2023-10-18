@@ -43,17 +43,19 @@ class MainActivity : ComponentActivity() {
                 Button(onClick = { openDialog.value = true }) {
                     Text(text = "open dialog")
                 }
+                val gregorian = selectedDate?.toGregorian()
                 Text(
                     modifier = Modifier.padding(vertical = 8.dp),
-                    text = "Selected Date: ${selectedDate?.year}/${selectedDate?.month}/${selectedDate?.day}",
+                    text = "Selected Date: ${selectedDate?.year}/${selectedDate?.month}/${selectedDate?.day}\n " +
+                            "${gregorian?.get(Calendar.YEAR)}/${gregorian?.get(Calendar.MONTH)}/${gregorian?.get(Calendar.DAY_OF_MONTH)}",
                     fontSize = 22.sp
                 )
             }
 
 
 
-            JalaliDatePickerDialog(
-                openDialog = openDialog,
+            JalaliDatePickerBottomSheet(
+                openBottomSheet = openDialog,
 //                initialDate = JalaliCalendar(1402, 6, 2),
                 onSelectDay = {
 //                    Log.d("Date", "onSelect: ${it.day} ${it.monthString} ${it.year}")
@@ -62,8 +64,9 @@ class MainActivity : ComponentActivity() {
 //                    Log.d("Date", "onConfirm: ${it.day} ${it.monthString} ${it.year}")
                     selectedDate = it
                 },
-                backgroundColor = Color.Yellow,
-                textColor = Color.Blue
+                onDismiss = {
+
+                }
             )
         }
     }
