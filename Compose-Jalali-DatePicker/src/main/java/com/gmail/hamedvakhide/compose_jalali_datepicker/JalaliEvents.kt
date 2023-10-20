@@ -6,24 +6,18 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material3.Divider
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -32,6 +26,7 @@ import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,17 +40,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.PersianCalendarTheme
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.backgroundColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.selectedIconColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColorHighlight
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.FormatHelper
-import com.gmail.hamedvakhide.compose_jalali_datepicker.util.LeftToRightLayout
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.PickerType
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.RightToLeftLayout
 import ir.huri.jcal.JalaliCalendar
+import kotlin.math.ceil
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -66,12 +60,10 @@ fun JalaliEventView(
     todayCircleColor: Color = MaterialTheme.colorScheme.selectedIconColor,
     textColorHighlight: Color = MaterialTheme.colorScheme.textColorHighlight,
     nextPreviousBtnColor: Color = MaterialTheme.colorScheme.textColor,
-    headerDividerColor: Color = MaterialTheme.colorScheme.onBackground,
-    headerTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    dividerColor: Color = MaterialTheme.colorScheme.onBackground,
     yearMonthTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
     weekDaysTextStyle: TextStyle = MaterialTheme.typography.titleSmall,
     dayNumberTextStyle: TextStyle = MaterialTheme.typography.bodySmall,
-    buttonsTextStyle: TextStyle = MaterialTheme.typography.bodyMedium,
 ) {
     var iconSize: Dp by remember {
         mutableStateOf(43.dp)
@@ -86,8 +78,8 @@ fun JalaliEventView(
 
     var jalali by remember {
         mutableStateOf(JalaliCalendar())
-//        mutableStateOf(JalaliCalendar())
     }
+
     val today = JalaliCalendar()
     var selectedDate: JalaliCalendar? by remember {
         mutableStateOf(jalali)
@@ -97,7 +89,6 @@ fun JalaliEventView(
         mutableStateOf(PickerType.Day)
     }
 
-//        val coroutineScope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
     when (configuration.orientation) {
         Configuration.ORIENTATION_LANDSCAPE -> {
@@ -119,11 +110,6 @@ fun JalaliEventView(
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        var firstJomeh: Int
-        firstJomeh = 7 - JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek
-        if (JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek == 7)
-            firstJomeh = 7
-
         Row(
             modifier = Modifier
                 .padding(horizontal = 4.dp),
@@ -133,11 +119,11 @@ fun JalaliEventView(
             if (pickerType == PickerType.Day) {
                 IconButton(
                     onClick = {
-                        jalali = if (jalali.month != 12) {
-                            JalaliCalendar(jalali.year, jalali.month + 1, 1)
-                        } else {
+                        if (jalali.month != 12) {
+                            jalali = JalaliCalendar(jalali.year, jalali.month + 1, 1)
+                        } /*else {
                             JalaliCalendar(jalali.year + 1, 1, 1)
-                        }
+                        }*/
                     },
                     modifier = Modifier.size(iconSize),
                 ) {
@@ -164,14 +150,13 @@ fun JalaliEventView(
             if (pickerType == PickerType.Day) {
                 IconButton(
                     onClick = {
-                        jalali = if (jalali.month != 1) {
-                            JalaliCalendar(jalali.year, jalali.month - 1, 1)
-                        } else {
+                        if (jalali.month != 1) {
+                            jalali = JalaliCalendar(jalali.year, jalali.month - 1, 1)
+                        } /*else {
                             JalaliCalendar(jalali.year - 1, 12, 1)
-                        }
+                        }*/
                     },
                     modifier = Modifier.size(iconSize)
-//                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.dialogNavigationButton)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.KeyboardArrowRight,
@@ -185,120 +170,113 @@ fun JalaliEventView(
 
         when (pickerType) {
             PickerType.Day -> {
-                var jomeh = firstJomeh
-                var day = jomeh
+                val firstDayOfWeek = JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek.run {
+                    if (this == 7)
+                        1
+                    else
+                        this.plus(1)
+                }
+                val pageCount = ceil(jalali.monthLength.toDouble().div(7.0)).toInt().run {
+                    if (firstDayOfWeek == 7)
+                        this.plus(1)
+                    else
+                        this
+                }
+                val pagerState = rememberPagerState(pageCount = { pageCount })
+
+                var day = 1
+                val monthArray = Array(pageCount) { IntArray(7) }
+                for (column in 1..pageCount) {
+                    for (row in 1..7) {
+                        if (day <= jalali.monthLength) {
+                            if (column == 1 && row < firstDayOfWeek) {
+                                monthArray[column.minus(1)][row.minus(1)] = 0
+                            } else {
+                                monthArray[column.minus(1)][row.minus(1)] = day
+                                day++
+                            }
+                        }
+                    }
+                }
+
+                LaunchedEffect(key1 = jalali) {
+                    pagerState.animateScrollToPage(0)
+                }
+
                 RightToLeftLayout {
                     HorizontalPager(
-                        state = rememberPagerState(pageCount = { 5 })
+                        state = pagerState
                     ) { page ->
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = weekDaysLabelPadding),
-                                horizontalArrangement = Arrangement.SpaceAround
-                            ) {
-                                Text(
-                                    text = FormatHelper.toPersianNumber("شنبه"),
-                                    style = weekDaysTextStyle
-                                )
-                                Text(
-                                    text = FormatHelper.toPersianNumber("1شنبه"),
-                                    style = weekDaysTextStyle
-                                )
-                                Text(
-                                    text = FormatHelper.toPersianNumber("2شنبه"),
-                                    style = weekDaysTextStyle
-                                )
-                                Text(
-                                    text = FormatHelper.toPersianNumber("3شنبه"),
-                                    style = weekDaysTextStyle
-                                )
-                                Text(
-                                    text = FormatHelper.toPersianNumber("4شنبه"),
-                                    style = weekDaysTextStyle
-                                )
-                                Text(
-                                    text = FormatHelper.toPersianNumber("5شنبه"),
-                                    style = weekDaysTextStyle
-                                )
-                                Text(
-                                    text = "جمعه",
-                                    style = weekDaysTextStyle
-                                )
-                            }
-
-                            LeftToRightLayout {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceAround
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = weekDaysLabelPadding),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            for (dayIndex in 1..7) {
+                                val selectedDay = monthArray[page][dayIndex.minus(1)]
+                                OutlinedIconButton(
+                                    onClick = {
+                                        selectedDate =
+                                            JalaliCalendar(
+                                                jalali.year,
+                                                jalali.month,
+                                                selectedDay
+                                            )
+                                        onSelectDay(selectedDate!!)
+                                    },
+                                    Modifier
+                                        .size(40.dp, 80.dp),
+                                    border = BorderStroke(
+                                        width = 1.5.dp,
+                                        color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month)
+                                            todayCircleColor
+                                        else
+                                            Color.Transparent
+                                    ),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = if (selectedDate != null && selectedDay == selectedDate!!.day && jalali.year == selectedDate!!.year && jalali.month == selectedDate!!.month)
+                                            selectedIconColor
+                                        else
+                                            Color.Transparent,
+                                    )
                                 ) {
-                                    val week = if (page > 0)
-                                        7
-                                    else
-                                        firstJomeh
-
-                                    day = jomeh.plus(if (page > 0) week else 0)
-                                    for (i in 7 downTo 1) {
-                                        if (day > 0 && day <= jalali.monthLength) {
-                                            val selectDay = day
-
-                                            OutlinedIconButton(
-                                                onClick = {
-                                                    selectedDate =
-                                                        JalaliCalendar(
-                                                            jalali.year,
-                                                            jalali.month,
-                                                            selectDay
-                                                        )
-                                                    onSelectDay(selectedDate!!)
-                                                },
-                                                Modifier.size(iconSize),
-                                                border = BorderStroke(
-                                                    width = 1.5.dp,
-                                                    color = if (day == today.day && jalali.year == today.year && jalali.month == today.month)
-                                                        todayCircleColor
-                                                    else
-                                                        Color.Transparent
-                                                ),
-                                                colors = IconButtonDefaults.filledIconButtonColors(
-                                                    containerColor = if (selectedDate != null && day == selectedDate!!.day && jalali.year == selectedDate!!.year && jalali.month == selectedDate!!.month)
-                                                        selectedIconColor
-                                                    else
-                                                        Color.Transparent,
-                                                )
-                                            ) {
-
-                                                Text(
-                                                    text = FormatHelper.toPersianNumber(day.toString()),
-                                                    style = dayNumberTextStyle,
-                                                    color = if (day == today.day && jalali.year == today.year && jalali.month == today.month) {
-                                                        textColorHighlight
-                                                    } else {
-                                                        dayNumberTextStyle.color
-                                                    }
-                                                )
-                                            }
-
-                                        } else {
-                                            FilledIconButton(
-                                                onClick = {},
-                                                Modifier
-                                                    .size(iconSize)
-                                                    .alpha(0f),
-                                                colors = IconButtonDefaults.filledIconButtonColors(
-                                                    containerColor = Color.Transparent
-                                                )
-                                            ) {
-                                                Text(
-                                                    text = day.toString(),
-                                                    style = dayNumberTextStyle
-                                                )
-                                            }
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        val dayName = when (dayIndex) {
+                                            7 -> "جمعه"
+                                            6 -> "5شنبه"
+                                            5 -> "4شنبه"
+                                            4 -> "3شنبه"
+                                            3 -> "2شنبه"
+                                            2 -> "1شنبه"
+                                            1 -> "شنبه"
+                                            else -> ""
                                         }
-                                        day--
+                                        RightToLeftLayout {
+                                            Text(
+                                                text = FormatHelper.toPersianNumber(dayName),
+                                                style = weekDaysTextStyle
+                                            )
+                                        }
+                                        Divider(
+                                            modifier = Modifier.padding(
+                                                vertical = 10.dp,
+                                                horizontal = 4.dp
+                                            ),
+                                            color = dividerColor
+                                        )
+                                        Text(
+                                            modifier = Modifier.alpha(if (selectedDay > 0 && selectedDay <= jalali.monthLength) 1F else 0F),
+                                            text = FormatHelper.toPersianNumber(selectedDay.toString()),
+                                            style = dayNumberTextStyle,
+                                            color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month) {
+                                                textColorHighlight
+                                            } else {
+                                                dayNumberTextStyle.color
+                                            }
+                                        )
                                     }
                                 }
                             }
@@ -523,56 +501,7 @@ fun JalaliEventView(
                 }
             }
 
-            PickerType.Year -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        style = yearMonthTextStyle,
-                        color = MaterialTheme.colorScheme.textColor,
-                        text = "انتخاب سال"
-                    )
-                }
-                val scrollState =
-                    rememberLazyListState(initialFirstVisibleItemIndex = jalali.year - 2)
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(yearSelectorHeight)
-                        .padding(horizontal = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    state = scrollState
-                ) {
-                    items(3000) { index ->
-                        Divider()
-                        Box(modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                jalali = JalaliCalendar(index, jalali.month, 1)
-                                pickerType = PickerType.Day
-                            }
-                            .padding(vertical = 4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = FormatHelper.toPersianNumber(index.toString()),
-                                style = yearMonthTextStyle,
-                                fontSize = 30.sp,
-                                color = yearTextColorFun(
-                                    jalali.year,
-                                    index,
-                                    textColorHighlight,
-                                    yearMonthTextStyle.color
-                                )
-                            )
-                        }
-                    }
-                }
-            }
+            PickerType.Year -> {}
         }
     }
 }
