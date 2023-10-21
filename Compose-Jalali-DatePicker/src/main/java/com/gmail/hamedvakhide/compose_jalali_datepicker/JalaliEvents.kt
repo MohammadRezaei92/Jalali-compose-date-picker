@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -54,7 +55,7 @@ import kotlin.math.ceil
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun JalaliEventView(
-    onSelectDay: (JalaliCalendar) -> Unit,
+    onSelectDay: (JalaliCalendar) -> String?,
     backgroundColor: Color = MaterialTheme.colorScheme.backgroundColor,
     selectedIconColor: Color = MaterialTheme.colorScheme.selectedIconColor,
     todayCircleColor: Color = MaterialTheme.colorScheme.selectedIconColor,
@@ -64,6 +65,8 @@ fun JalaliEventView(
     yearMonthTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
     weekDaysTextStyle: TextStyle = MaterialTheme.typography.titleSmall,
     dayNumberTextStyle: TextStyle = MaterialTheme.typography.bodySmall,
+    eventTextStyle: TextStyle = MaterialTheme.typography.titleSmall,
+    eventIconRes: Int? = null
 ) {
     var iconSize: Dp by remember {
         mutableStateOf(43.dp)
@@ -198,6 +201,7 @@ fun JalaliEventView(
                         }
                     }
                 }
+                var event: String? by remember { mutableStateOf(null) }
 
                 LaunchedEffect(key1 = jalali) {
                     pagerState.animateScrollToPage(0)
@@ -207,79 +211,101 @@ fun JalaliEventView(
                     HorizontalPager(
                         state = pagerState
                     ) { page ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = weekDaysLabelPadding),
-                            horizontalArrangement = Arrangement.SpaceAround
-                        ) {
-                            for (dayIndex in 1..7) {
-                                val selectedDay = monthArray[page][dayIndex.minus(1)]
-                                OutlinedIconButton(
-                                    onClick = {
-                                        selectedDate =
-                                            JalaliCalendar(
-                                                jalali.year,
-                                                jalali.month,
-                                                selectedDay
-                                            )
-                                        onSelectDay(selectedDate!!)
-                                    },
-                                    Modifier
-                                        .size(40.dp, 80.dp),
-                                    border = BorderStroke(
-                                        width = 1.5.dp,
-                                        color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month)
-                                            todayCircleColor
-                                        else
-                                            Color.Transparent
-                                    ),
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = if (selectedDate != null && selectedDay == selectedDate!!.day && jalali.year == selectedDate!!.year && jalali.month == selectedDate!!.month)
-                                            selectedIconColor
-                                        else
-                                            Color.Transparent,
-                                    )
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = weekDaysLabelPadding),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                for (dayIndex in 1..7) {
+                                    val selectedDay = monthArray[page][dayIndex.minus(1)]
+                                    OutlinedIconButton(
+                                        onClick = {
+                                            selectedDate =
+                                                JalaliCalendar(
+                                                    jalali.year,
+                                                    jalali.month,
+                                                    selectedDay
+                                                )
+                                            event = onSelectDay(selectedDate!!)
+                                        },
+                                        Modifier
+                                            .size(40.dp, 80.dp),
+                                        border = BorderStroke(
+                                            width = 1.5.dp,
+                                            color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month)
+                                                todayCircleColor
+                                            else
+                                                Color.Transparent
+                                        ),
+                                        colors = IconButtonDefaults.filledIconButtonColors(
+                                            containerColor = if (selectedDate != null && selectedDay == selectedDate!!.day && jalali.year == selectedDate!!.year && jalali.month == selectedDate!!.month)
+                                                selectedIconColor
+                                            else
+                                                Color.Transparent,
+                                        )
                                     ) {
-                                        val dayName = when (dayIndex) {
-                                            7 -> "جمعه"
-                                            6 -> "5شنبه"
-                                            5 -> "4شنبه"
-                                            4 -> "3شنبه"
-                                            3 -> "2شنبه"
-                                            2 -> "1شنبه"
-                                            1 -> "شنبه"
-                                            else -> ""
-                                        }
-                                        RightToLeftLayout {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            val dayName = when (dayIndex) {
+                                                7 -> "جمعه"
+                                                6 -> "5شنبه"
+                                                5 -> "4شنبه"
+                                                4 -> "3شنبه"
+                                                3 -> "2شنبه"
+                                                2 -> "1شنبه"
+                                                1 -> "شنبه"
+                                                else -> ""
+                                            }
+                                            RightToLeftLayout {
+                                                Text(
+                                                    text = FormatHelper.toPersianNumber(dayName),
+                                                    style = weekDaysTextStyle
+                                                )
+                                            }
+                                            Divider(
+                                                modifier = Modifier.padding(
+                                                    vertical = 10.dp,
+                                                    horizontal = 4.dp
+                                                ),
+                                                color = dividerColor
+                                            )
                                             Text(
-                                                text = FormatHelper.toPersianNumber(dayName),
-                                                style = weekDaysTextStyle
+                                                modifier = Modifier.alpha(if (selectedDay > 0 && selectedDay <= jalali.monthLength) 1F else 0F),
+                                                text = FormatHelper.toPersianNumber(selectedDay.toString()),
+                                                style = dayNumberTextStyle,
+                                                color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month) {
+                                                    textColorHighlight
+                                                } else {
+                                                    dayNumberTextStyle.color
+                                                }
                                             )
                                         }
-                                        Divider(
-                                            modifier = Modifier.padding(
-                                                vertical = 10.dp,
-                                                horizontal = 4.dp
-                                            ),
-                                            color = dividerColor
-                                        )
-                                        Text(
-                                            modifier = Modifier.alpha(if (selectedDay > 0 && selectedDay <= jalali.monthLength) 1F else 0F),
-                                            text = FormatHelper.toPersianNumber(selectedDay.toString()),
-                                            style = dayNumberTextStyle,
-                                            color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month) {
-                                                textColorHighlight
-                                            } else {
-                                                dayNumberTextStyle.color
-                                            }
-                                        )
                                     }
                                 }
                             }
+
+                            event?.let {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = eventIconRes ?: R.drawable.round_event_24
+                                        ),
+                                        contentDescription = ""
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        text = it,
+                                        style = eventTextStyle,
+                                    )
+                                }
+                            }
+
                         }
                     }
                 }
@@ -508,10 +534,12 @@ fun JalaliEventView(
 
 @Preview
 @Composable
-fun jalaliEventViewPrev() {
+fun JalaliEventViewPrev() {
     PersianCalendarTheme {
         JalaliEventView(
-            onSelectDay = {}
+            onSelectDay = {
+                "Returned event for ${it.year}/${it.month}/${it.day}"
+            }
         )
     }
 }
