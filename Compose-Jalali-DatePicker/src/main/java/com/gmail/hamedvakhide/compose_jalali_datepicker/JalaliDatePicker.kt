@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.PersianCalendarTheme
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.backgroundColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.selectedIconColor
@@ -104,7 +105,7 @@ fun JalaliDatePickerDialog(
     if (openDialog.value) {
         Dialog(
             onDismissRequest = { openDialog.value = false },
-//            properties = DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
 
             Box(
