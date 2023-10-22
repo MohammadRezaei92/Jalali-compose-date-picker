@@ -75,20 +75,15 @@ import ir.huri.jcal.JalaliCalendar
  * @param onSelectDay Called when a day is selected.
  * @param onConfirm Called when confirm button is clicked.
  * @param backgroundColor Background color of the dialog.
- * @param textColor Color of the text.
  * @param selectedIconColor Color of selected day (month, year) circular icon.
  * @param textColorHighlight Color of current day (month, year) text.
- * @param dropDownColor Color of the year and month drop-down text.
- * @param dayOfWeekLabelColor Color for the day of the week label text.
- * @param confirmBtnColor Color of confirm button.
- * @param cancelBtnColor Color of cancel button.
- * @param todayBtnColor Color of today button.
  * @param nextPreviousBtnColor Color of next and previous month button.
  *
  */
 
 @Composable
 fun JalaliDatePickerDialog(
+    modifier: Modifier = Modifier,
     openDialog: MutableState<Boolean>,
     initialDate: JalaliCalendar? = null,
     onSelectDay: (JalaliCalendar) -> Unit,
@@ -134,6 +129,7 @@ fun JalaliDatePickerDialog(
 
                     ) {
                     JalaliCalendarView(
+                        modifier = modifier,
                         initialDate = initialDate,
                         onSelectDay = {
                             onSelectDay(it)
@@ -168,6 +164,7 @@ fun JalaliDatePickerDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JalaliDatePickerBottomSheet(
+    modifier: Modifier = Modifier,
     openBottomSheet: MutableState<Boolean>,
     initialDate: JalaliCalendar? = null,
     onSelectDay: (JalaliCalendar) -> Unit,
@@ -193,6 +190,7 @@ fun JalaliDatePickerBottomSheet(
             dragHandle = null
         ) {
             JalaliCalendarView(
+                modifier = modifier,
                 initialDate = initialDate,
                 onSelectDay = {
                     onSelectDay(it)
@@ -222,6 +220,7 @@ fun JalaliDatePickerBottomSheet(
 
 @Composable
 fun JalaliCalendarView(
+    modifier: Modifier = Modifier,
     initialDate: JalaliCalendar? = null,
     onSelectDay: (JalaliCalendar) -> Unit,
     onConfirm: (JalaliCalendar) -> Unit,
@@ -277,12 +276,12 @@ fun JalaliCalendarView(
 
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .background(color = backgroundColor)
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        var firstJomeh = 0
+        var firstJomeh: Int
         firstJomeh = 7 - JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek
         if (JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek == 7)
             firstJomeh = 7
@@ -823,7 +822,7 @@ fun yearTextColorFun(
 
 @Preview
 @Composable
-fun jalaliDatePickerPrev() {
+fun JalaliDatePickerPrev() {
     PersianCalendarTheme {
         JalaliDatePickerDialog(
             initialDate = JalaliCalendar().tomorrow,
