@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material3.Divider
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -38,18 +36,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.PersianCalendarTheme
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.backgroundColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.selectedIconColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColorHighlight
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.FormatHelper
-import com.gmail.hamedvakhide.compose_jalali_datepicker.util.LeftToRightLayout
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.PickerType
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.RightToLeftLayout
 import ir.huri.jcal.JalaliCalendar
@@ -58,7 +55,7 @@ import kotlin.math.ceil
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun JalaliEventView(
-    onSelectDay: (JalaliCalendar) -> Unit,
+    onSelectDay: (JalaliCalendar) -> String?,
     backgroundColor: Color = MaterialTheme.colorScheme.backgroundColor,
     selectedIconColor: Color = MaterialTheme.colorScheme.selectedIconColor,
     todayCircleColor: Color = MaterialTheme.colorScheme.selectedIconColor,
@@ -68,6 +65,8 @@ fun JalaliEventView(
     yearMonthTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
     weekDaysTextStyle: TextStyle = MaterialTheme.typography.titleSmall,
     dayNumberTextStyle: TextStyle = MaterialTheme.typography.bodySmall,
+    eventTextStyle: TextStyle = MaterialTheme.typography.titleSmall,
+    eventIconRes: Int? = null
 ) {
     var iconSize: Dp by remember {
         mutableStateOf(43.dp)
@@ -114,11 +113,6 @@ fun JalaliEventView(
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        var firstJomeh: Int
-        firstJomeh = 7 - JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek
-        if (JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek == 7)
-            firstJomeh = 7
-
         Row(
             modifier = Modifier
                 .padding(horizontal = 4.dp),
@@ -179,8 +173,35 @@ fun JalaliEventView(
 
         when (pickerType) {
             PickerType.Day -> {
-                val pageCount = ceil(jalali.monthLength.toDouble().div(7.0)).toInt()
+                val firstDayOfWeek = JalaliCalendar(jalali.year, jalali.month, 1).dayOfWeek.run {
+                    if (this == 7)
+                        1
+                    else
+                        this.plus(1)
+                }
+                val pageCount = ceil(jalali.monthLength.toDouble().div(7.0)).toInt().run {
+                    if (firstDayOfWeek == 7)
+                        this.plus(1)
+                    else
+                        this
+                }
                 val pagerState = rememberPagerState(pageCount = { pageCount })
+
+                var day = 1
+                val monthArray = Array(pageCount) { IntArray(7) }
+                for (column in 1..pageCount) {
+                    for (row in 1..7) {
+                        if (day <= jalali.monthLength) {
+                            if (column == 1 && row < firstDayOfWeek) {
+                                monthArray[column.minus(1)][row.minus(1)] = 0
+                            } else {
+                                monthArray[column.minus(1)][row.minus(1)] = day
+                                day++
+                            }
+                        }
+                    }
+                }
+                var event: String? by remember { mutableStateOf(null) }
 
                 LaunchedEffect(key1 = jalali) {
                     pagerState.animateScrollToPage(0)
@@ -190,8 +211,7 @@ fun JalaliEventView(
                     HorizontalPager(
                         state = pagerState
                     ) { page ->
-                        var day = firstJomeh.plus(7.times(page))
-                        LeftToRightLayout {
+                        Column {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -199,7 +219,7 @@ fun JalaliEventView(
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
                                 for (dayIndex in 1..7) {
-                                    val selectedDay = day
+                                    val selectedDay = monthArray[page][dayIndex.minus(1)]
                                     OutlinedIconButton(
                                         onClick = {
                                             selectedDate =
@@ -208,19 +228,19 @@ fun JalaliEventView(
                                                     jalali.month,
                                                     selectedDay
                                                 )
-                                            onSelectDay(selectedDate!!)
+                                            event = onSelectDay(selectedDate!!)
                                         },
                                         Modifier
                                             .size(40.dp, 80.dp),
                                         border = BorderStroke(
                                             width = 1.5.dp,
-                                            color = if (day == today.day && jalali.year == today.year && jalali.month == today.month)
+                                            color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month)
                                                 todayCircleColor
                                             else
                                                 Color.Transparent
                                         ),
                                         colors = IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = if (selectedDate != null && day == selectedDate!!.day && jalali.year == selectedDate!!.year && jalali.month == selectedDate!!.month)
+                                            containerColor = if (selectedDate != null && selectedDay == selectedDate!!.day && jalali.year == selectedDate!!.year && jalali.month == selectedDate!!.month)
                                                 selectedIconColor
                                             else
                                                 Color.Transparent,
@@ -230,13 +250,13 @@ fun JalaliEventView(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             val dayName = when (dayIndex) {
-                                                1 -> "جمعه"
-                                                2 -> "5شنبه"
-                                                3 -> "4شنبه"
+                                                7 -> "جمعه"
+                                                6 -> "5شنبه"
+                                                5 -> "4شنبه"
                                                 4 -> "3شنبه"
-                                                5 -> "2شنبه"
-                                                6 -> "1شنبه"
-                                                7 -> "شنبه"
+                                                3 -> "2شنبه"
+                                                2 -> "1شنبه"
+                                                1 -> "شنبه"
                                                 else -> ""
                                             }
                                             RightToLeftLayout {
@@ -246,14 +266,17 @@ fun JalaliEventView(
                                                 )
                                             }
                                             Divider(
-                                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                                modifier = Modifier.padding(
+                                                    vertical = 10.dp,
+                                                    horizontal = 4.dp
+                                                ),
                                                 color = dividerColor
                                             )
                                             Text(
-                                                modifier = Modifier.alpha(if (day > 0 && day <= jalali.monthLength) 1F else 0F),
-                                                text = FormatHelper.toPersianNumber(day.toString()),
+                                                modifier = Modifier.alpha(if (selectedDay > 0 && selectedDay <= jalali.monthLength) 1F else 0F),
+                                                text = FormatHelper.toPersianNumber(selectedDay.toString()),
                                                 style = dayNumberTextStyle,
-                                                color = if (day == today.day && jalali.year == today.year && jalali.month == today.month) {
+                                                color = if (selectedDay == today.day && jalali.year == today.year && jalali.month == today.month) {
                                                     textColorHighlight
                                                 } else {
                                                     dayNumberTextStyle.color
@@ -261,10 +284,28 @@ fun JalaliEventView(
                                             )
                                         }
                                     }
-                                    if (day > 0 && day <= jalali.monthLength)
-                                        day--
                                 }
                             }
+
+                            event?.let {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = eventIconRes ?: R.drawable.round_event_24
+                                        ),
+                                        contentDescription = ""
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        text = it,
+                                        style = eventTextStyle,
+                                    )
+                                }
+                            }
+
                         }
                     }
                 }
@@ -493,10 +534,12 @@ fun JalaliEventView(
 
 @Preview
 @Composable
-fun jalaliEventViewPrev() {
+fun JalaliEventViewPrev() {
     PersianCalendarTheme {
         JalaliEventView(
-            onSelectDay = {}
+            onSelectDay = {
+                "Returned event for ${it.year}/${it.month}/${it.day}"
+            }
         )
     }
 }
