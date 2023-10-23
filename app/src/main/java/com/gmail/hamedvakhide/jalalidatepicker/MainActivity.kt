@@ -1,7 +1,6 @@
 package com.gmail.hamedvakhide.jalalidatepicker
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliDatePickerBottomSheet
 import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliEventView
 import ir.huri.jcal.JalaliCalendar
-import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +29,7 @@ class MainActivity : ComponentActivity() {
             val openDialog = remember { mutableStateOf(false) }
 
             var selectedDate by remember {
-                mutableStateOf<JalaliCalendar?>(null)
+                mutableStateOf<Pair<JalaliCalendar,JalaliCalendar?>?>(null)
             }
 
             Scaffold {
@@ -45,15 +43,16 @@ class MainActivity : ComponentActivity() {
                     Button(onClick = { openDialog.value = true }) {
                         Text(text = "open dialog")
                     }
-                    val gregorian = selectedDate?.toGregorian()
+                    val text = if (selectedDate != null && selectedDate?.second == null)
+                        "Selected Date: ${selectedDate!!.first.year}/${selectedDate!!.first.month}/${selectedDate!!.first.day}"
+                    else if (selectedDate != null)
+                        "Selected Range: from ${selectedDate!!.first.year}/${selectedDate!!.first.month}/${selectedDate!!.first.day}" +
+                                "to ${selectedDate!!.second!!.year}/${selectedDate!!.second!!.month}/${selectedDate!!.second!!.day}"
+                    else ""
+
                     Text(
                         modifier = Modifier.padding(vertical = 8.dp),
-                        text = "Selected Date: ${selectedDate?.year}/${selectedDate?.month}/${selectedDate?.day}\n " +
-                            "${gregorian?.get(Calendar.YEAR)}/${gregorian?.get(Calendar.MONTH)}/${
-                                gregorian?.get(
-                                    Calendar.DAY_OF_MONTH
-                                )
-                            }",
+                        text = text,
                         fontSize = 22.sp
                     )
 
@@ -62,14 +61,13 @@ class MainActivity : ComponentActivity() {
                     })
 
                     JalaliDatePickerBottomSheet(
-                        initialDate = JalaliCalendar().yesterday,
+                        initialDate = Pair(null, null),
                         openBottomSheet = openDialog,
-                        onSelectDay = {
-                            "Event for: $it"
+                        onSelectDay = { start, end ->
+                            "Event for: $start"
                         },
-                        onConfirm = {
-                            Log.d("Date", "onConfirm: ${it.day} ${it.monthString} ${it.year}")
-                            selectedDate = it
+                        onConfirm = { start, end ->
+                            selectedDate = Pair(start, end)
                         },
                         onDismiss = {}
                     )
