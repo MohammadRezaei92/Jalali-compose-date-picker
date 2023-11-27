@@ -143,17 +143,24 @@ fun JalaliRangePickerView(
             RightToLeftLayout {
                 Column {
                     Row(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = FormatHelper.toPersianNumber("${today.day} ${today.monthString} ${today.year}"),
                             style = headerTextStyle
                         )
                         Spacer(modifier = Modifier.weight(1F))
-                        Text(
-                            text = "تاریخ امروز",
-                            style = headerTextStyle
-                        )
+                        TextButton(
+                            onClick = {
+                                jalali = today
+                            }
+                        ) {
+                            Text(
+                                text = "تاریخ امروز",
+                                style = headerTextStyle
+                            )
+                        }
                     }
                     Divider(color = headerDividerColor, thickness = 1.5.dp)
                 }
