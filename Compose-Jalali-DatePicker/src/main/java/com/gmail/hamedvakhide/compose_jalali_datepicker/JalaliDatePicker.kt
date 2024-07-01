@@ -25,7 +25,7 @@ import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.backgroundColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.selectedIconColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColorHighlight
-import ir.huri.jcal.JalaliCalendar
+import com.gmail.hamedvakhide.compose_jalali_datepicker.util.JalaliCalendar
 
 /**
  * Opens a Jalali DatePicker dialog with the given content.

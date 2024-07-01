@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliDatePickerBottomSheet
 import com.gmail.hamedvakhide.compose_jalali_datepicker.JalaliEventView
-import ir.huri.jcal.JalaliCalendar
+import com.gmail.hamedvakhide.compose_jalali_datepicker.util.JalaliCalendar
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,10 +44,10 @@ class MainActivity : ComponentActivity() {
                         Text(text = "open dialog")
                     }
                     val text = if (selectedDate != null && selectedDate?.second == null)
-                        "Selected Date: ${selectedDate!!.first.year}/${selectedDate!!.first.month}/${selectedDate!!.first.day}"
+                        "تاریخ: ${selectedDate!!.first.dayOfWeekDayMonthString}"
                     else if (selectedDate != null)
-                        "Selected Range: from ${selectedDate!!.first.year}/${selectedDate!!.first.month}/${selectedDate!!.first.day}" +
-                                "to ${selectedDate!!.second!!.year}/${selectedDate!!.second!!.month}/${selectedDate!!.second!!.day}"
+                        "تاریخ: از ${selectedDate!!.first.dayOfWeekDayMonthString}" +
+                                " تا ${selectedDate!!.second!!.dayOfWeekDayMonthString}"
                     else ""
 
                     Text(
@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
                     JalaliDatePickerBottomSheet(
                         initialDate = Pair(null, null),
                         openBottomSheet = openDialog,
+                        rangePickerMode = true,
                         onSelectDay = { start, end ->
                             "Event for: $start"
                         },

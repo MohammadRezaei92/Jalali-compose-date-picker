@@ -1,7 +1,5 @@
 package com.gmail.hamedvakhide.compose_jalali_datepicker
 
-import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -44,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,10 +54,11 @@ import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.selectedIconCol
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColor
 import com.gmail.hamedvakhide.compose_jalali_datepicker.ui.theme.textColorHighlight
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.FormatHelper
+import com.gmail.hamedvakhide.compose_jalali_datepicker.util.JalaliCalendar
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.LeftToRightLayout
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.PickerType
 import com.gmail.hamedvakhide.compose_jalali_datepicker.util.RightToLeftLayout
-import ir.huri.jcal.JalaliCalendar
+import kotlinx.datetime.daysUntil
 
 @Composable
 fun JalaliRangePickerView(
@@ -108,19 +106,16 @@ fun JalaliRangePickerView(
         mutableStateOf(PickerType.Day)
     }
 
-    val configuration = LocalConfiguration.current
+    /*val configuration = LocalConfiguration.current
     when (configuration.orientation) {
         Configuration.ORIENTATION_LANDSCAPE -> {
-            Log.d("DAGDAG", "CalendarView: Landscape")
             iconSize = 32.dp
             weekDaysLabelPadding = 9.dp
             yearSelectorHeight = 230.dp
         }
 
-        else -> {
-            Log.d("DAGDAG", "CalendarView: Portrait")
-        }
-    }
+        else -> {}
+    }*/
 
 
     LeftToRightLayout {
@@ -326,7 +321,7 @@ fun JalaliRangePickerView(
                                                     selectDay
                                                 )
                                                 val isFirstBigger =
-                                                    first.toGregorian().after(second.toGregorian())
+                                                    first.toGregorian().daysUntil(second.toGregorian()) < 0
                                                 selectedDate = selectedDate.copy(
                                                     first = if (isFirstBigger) second else first,
                                                     second = if (isFirstBigger) first else second
@@ -751,8 +746,8 @@ private fun getSelectedDayType(
     rangeStartDate == currentDate -> SelectedDateType.Start
     rangeEndDate == currentDate -> SelectedDateType.End
     rangeEndDate != null &&
-            rangeStartDate!!.toGregorian().before(currentDate.toGregorian()) &&
-            rangeEndDate.toGregorian().after(currentDate.toGregorian()) -> SelectedDateType.Between
+            rangeStartDate!!.toGregorian().daysUntil(currentDate.toGregorian()) > 0 &&
+            rangeEndDate.toGregorian().daysUntil(currentDate.toGregorian()) < 0 -> SelectedDateType.Between
 
     else -> SelectedDateType.None
 }
