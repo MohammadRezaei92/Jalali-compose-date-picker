@@ -50,7 +50,7 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     
-    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0"
+    api "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0"
 
 }
 
